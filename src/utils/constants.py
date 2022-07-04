@@ -1,0 +1,10 @@
+# General
+import os
+
+CLIENT_ID = os.getenv('CLIENT_ID', '123')
+
+NEQUI_CHANNEL = os.getenv('NEQUI_CHANNEL', 'MF-001')
+
+# Status Codes
+NEQUI_STATUS_CODE_SUCCESS = '0'
+NEQUI_STATUS_DESC_SUCCESS = 'SUCCESS'
