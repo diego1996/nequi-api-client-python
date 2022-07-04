@@ -40,39 +40,38 @@ En el archivo ```/src/auth.py``` podrá encontrar el código necesario para aute
 
 Esta sección cuenta con 3 ejemplos que podrá encontrar alojados en la carpeta ```/src/deposit_withdrawal/```.
 
-- **Validar una cuenta**: En el archivo ```/src/deposit_withdrawal/ValidateClient.php``` podrá encontrar el código para validar una cuenta.
+- **Validar una cuenta**: En el archivo ```/src/deposit_withdrawal/validate_client.py``` podrá encontrar el código para validar una cuenta.
 
-- **Recargar una cuenta**: En el archivo ```/src/deposit_withdrawal/ChargeAccount.php``` podrá encontrar el código para recargar una cuenta.
+- **Recargar una cuenta**: En el archivo ```/src/deposit_withdrawal/charge_accpunt.py``` podrá encontrar el código para recargar una cuenta.
 
-- **Verificar una solicitud de retiro**: En el archivo ```/src/deposit_withdrawal/CheckWithdrawalRequest.php``` podrá encontrar el código para validar una cuenta.
+- **Verificar una solicitud de retiro**: En el archivo ```/src/deposit_withdrawal/check_withdrawal.py``` podrá encontrar el código para validar una cuenta.
 
 ### Pagos con QR code
 
 Esta sección cuenta con 3 ejemplos que podrá encontrar alojados en la carpeta ```/src/payment/```.
 
-- **Generar pago**: En el archivo ```/src/payment/GenerateQR.php``` podrá encontrar el código para generar un pago con código QR.
+- **Generar pago**: En el archivo ```/src/payment/generate_qr.py``` podrá encontrar el código para generar un pago con código QR.
 
-- **Consultar estado del pago**: En el archivo ```/src/payment/GetStatusPayment.php``` podrá encontrar el código para consultar el estaddo un pago con código QR.
+- **Consultar estado del pago**: En el archivo ```/src/payment/get_status_payment.py``` podrá encontrar el código para consultar el estaddo un pago con código QR.
 
-- **Reversar la transacción**: En el archivo ```/src/payment/ReverseTx.php``` podrá encontrar el código para reversar una transacción.
+- **Reversar la transacción**: En el archivo ```/src/payment/reverse_transaction.py``` podrá encontrar el código para reversar una transacción.
 
 ### Pagos con notificación
 
 Esta sección cuenta con 1 ejemplo que podrá encontrar alojados en la carpeta ```/src/payment_push/```.
 
-- **Solicitu de pago**: En el archivo ```/src/payment_push/UnregisteredPaymentRequest.php``` podrá encontrar el código para solicitar un pago mediante notificación push.
+- **Solicitud de pago**: En el archivo ```/src/payment_push/unregistered_payment.py``` podrá encontrar el código para solicitar un pago mediante notificación push.
 
 ## 3. Ejecutar los ejemplos
 
-Para ver en funcionamiento de los ejemplos, descargue los fuentes, desplieguelos en cualquier servidor donde corra PHP(7.x), puede ser Apache, y acceda al archivo ```/src/index.php``` desde un navegador web.
+Para ver en funcionamiento de los ejemplos, descargue los fuentes, desplieguelos en cualquier servidor donde corra Python, puede ser Apache, y acceda al archivo ```/src/main.py``` desde una consola o terminal.
 
 Si lo desea también puede desplegar estos ejemplos usando [docker](https://www.docker.com/) y [docker-compose](https://docs.docker.com/compose/), ejecutando el siguiente comando en la raíz del proyecto:
-- ```docker-compose up```: Este comando puede tomar unos minutos mientras se descargan los recursos necesarios, al final quedará la terminal de comandos en modo activo, lo cual le permitirá detener el despliegue presionando ```Ctrl + c```. Ahora podrá acceder desde un navegador a ```localhost:8000```.
+- ```docker-compose up```: Este comando puede tomar unos minutos mientras se descargan los recursos necesarios, al final quedará la terminal de comandos en modo activo, lo cual le permitirá detener el despliegue presionando ```Ctrl + c```.
 
 ## 4. Información adicional
 
 - Carpeta ```/src/utils/```: Aquí podrá encontrar funciones que se reusan en los ejemplos de integración, y constantes para validar resultados del API.
-- Carpeta ```/src/lib/```: Carpeta destinada para guardar las librerías de externos, por ejemplo la librería 'Requests'.
 
 ----------
-*Made with ♥ at Nequi*
+*Made with ♥ by Diego A Asencio C*
