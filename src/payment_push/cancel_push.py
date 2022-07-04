@@ -8,15 +8,13 @@ from src.utils import constants
 from src.utils.responses import NequiResponse
 
 
-class ReverseTransactionAPI:
-    _status_code: str
-    _status_desc: str
+class CancelPushAPI:
     _rest_endpoint: str
 
     def __init__(self):
-        self._rest_endpoint = '/agents/v2/-services-reverseservices-reversetransaction'
+        self._rest_endpoint = '/payments/v2/-services-paymentservice-cancelunregisteredpayment'
 
-    def _call(self, phone: str, code: str, value: str, message_id: str, transaction_type: str) -> None:
+    def _call(self, phone_number: str, code: str, transaction_id: str) -> bool:
         headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -26,25 +24,23 @@ class ReverseTransactionAPI:
         data = {
             'RequestMessage': {
                 'RequestHeader': {
-                    'Channel': constants.NEQUI_CHANNEL_DEPOSIT_WITHDRAWALS,
+                    'Channel': constants.NEQUI_CHANNEL_PUSH_PAYMENTS,
                     'RequestDate': datetime.now().strftime('%Y-%m-%dT%H:%M:%S0Z'),
                     'MessageID': secrets.token_hex(5),
                     'ClientID': constants.CLIENT_ID,
                     'Destination': {
-                        'ServiceName': 'ReverseServices',
-                        'ServiceOperation': 'reverseTransaction',
+                        'ServiceName': 'PaymentsService',
+                        'ServiceOperation': 'unregisteredPayment',
                         'ServiceRegion': 'C001',
                         'ServiceVersion': '1.0.0'
                     }
                 },
                 'RequestBody': {
                     'any': {
-                        'reversionRQ': {
-                            'phoneNumber': phone,
+                        'cancelUnregisteredPaymentRQ': {
+                            'phoneNumber': phone_number,
                             'code': code,
-                            'value': value,
-                            'messageId': message_id,
-                            'type': transaction_type,
+                            'transactionId': transaction_id
                         }
                     }
                 }
@@ -57,13 +53,10 @@ class ReverseTransactionAPI:
                 data = NequiResponse(**response.json())
                 status_code = data.ResponseMessage.ResponseHeader.Status.StatusCode
                 status_desc = data.ResponseMessage.ResponseHeader.Status.StatusDesc
-                self._status_code = status_code
-                self._status_desc = status_desc
                 if status_code == constants.NEQUI_STATUS_CODE_SUCCESS:
-                    print(
-                        "Reversión de la transacción realizada correctamente: "
-                        f"\nEstado: {status_desc} "
-                    )
+                    rs = data.ResponseMessage.ResponseBody.any.get('cancelRequestMoneyRS', {})
+                    print(f"Notificatión Push cancelada correctamente -> Data: {rs}")
+                    return True
                 else:
                     raise Exception(f'Error, StatusCode: {status_code} - StatusDesc: {status_desc}')
             else:
@@ -71,25 +64,9 @@ class ReverseTransactionAPI:
         except Exception as e:
             raise e
 
-    def _reverse_transaction(self, phone: str, code: str, value: str, message_id: str, transaction_type: str) -> None:
+    def cancel_push(self, phone_number: str, code: str, transaction_id: str) -> bool:
         try:
-            self._call(phone, code, value, message_id, transaction_type)
+            return self._call(phone_number, code, transaction_id)
         except Exception as e:
-            print(f'Depositos y retiros -> Error realizando la reversión de la transacción -> {e}')
-
-    def reverse_deposit(self, phone: str, code: str, value: str, message_id: str) -> None:
-        transaction_type = 'cashin'
-        self._reverse_transaction(phone, code, value, message_id, transaction_type)
-
-    def reverse_withdrawal(self, phone: str, code: str, value: str, message_id: str) -> None:
-        transaction_type = 'cashout'
-        self._reverse_transaction(phone, code, value, message_id, transaction_type)
-
-    def is_reversed(self) -> bool:
-        return True if self._status_code == constants.NEQUI_STATUS_CODE_SUCCESS else False
-
-    def get_status_code(self) -> str:
-        return self._status_code
-
-    def get_status_desc(self) -> str:
-        return self._status_desc
+            print(f'Pagos con Notificación -> Error cancelando la notificación push -> {e}')
+            return False

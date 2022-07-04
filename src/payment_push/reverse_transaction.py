@@ -11,12 +11,16 @@ from src.utils.responses import NequiResponse
 class ReverseTransactionAPI:
     _status_code: str
     _status_desc: str
+    _tx_type: str
     _rest_endpoint: str
 
     def __init__(self):
-        self._rest_endpoint = '/agents/v2/-services-reverseservices-reversetransaction'
+        self._status_code = ''
+        self._status_desc = ''
+        self._tx_type = 'payment'
+        self._rest_endpoint = '/payments/v2/-services-reverseservices-reversetransaction'
 
-    def _call(self, phone: str, code: str, value: str, message_id: str, transaction_type: str) -> None:
+    def _call(self, phone: str, code: str, value: str, message_id: str) -> None:
         headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -26,7 +30,7 @@ class ReverseTransactionAPI:
         data = {
             'RequestMessage': {
                 'RequestHeader': {
-                    'Channel': constants.NEQUI_CHANNEL_DEPOSIT_WITHDRAWALS,
+                    'Channel': constants.NEQUI_CHANNEL_PUSH_PAYMENTS,
                     'RequestDate': datetime.now().strftime('%Y-%m-%dT%H:%M:%S0Z'),
                     'MessageID': secrets.token_hex(5),
                     'ClientID': constants.CLIENT_ID,
@@ -44,7 +48,7 @@ class ReverseTransactionAPI:
                             'code': code,
                             'value': value,
                             'messageId': message_id,
-                            'type': transaction_type,
+                            'type': self._tx_type,
                         }
                     }
                 }
@@ -71,19 +75,11 @@ class ReverseTransactionAPI:
         except Exception as e:
             raise e
 
-    def _reverse_transaction(self, phone: str, code: str, value: str, message_id: str, transaction_type: str) -> None:
+    def reverse_push_payment(self, phone: str, code: str, value: str, message_id: str) -> None:
         try:
-            self._call(phone, code, value, message_id, transaction_type)
+            self._call(phone, code, value, message_id)
         except Exception as e:
-            print(f'Depositos y retiros -> Error realizando la reversión de la transacción -> {e}')
-
-    def reverse_deposit(self, phone: str, code: str, value: str, message_id: str) -> None:
-        transaction_type = 'cashin'
-        self._reverse_transaction(phone, code, value, message_id, transaction_type)
-
-    def reverse_withdrawal(self, phone: str, code: str, value: str, message_id: str) -> None:
-        transaction_type = 'cashout'
-        self._reverse_transaction(phone, code, value, message_id, transaction_type)
+            print(f'Pagos con Notificación -> Error realizando la reversión de la transacción -> {e}')
 
     def is_reversed(self) -> bool:
         return True if self._status_code == constants.NEQUI_STATUS_CODE_SUCCESS else False
