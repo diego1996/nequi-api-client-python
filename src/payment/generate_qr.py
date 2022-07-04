@@ -1,32 +1,20 @@
 import json
 import secrets
 import requests
-from dataclasses import dataclass
 from datetime import datetime
 from src.auth import auth_token
 from src.app_config import config
-from src.deposit_withdrawal.get_token_rsa import rsa_token
 from src.utils import constants
 from src.utils.responses import NequiResponse
 
 
-@dataclass
-class WithdrawalResponse:
-    phoneNumber: str
-    name: str
-    value: str
-    date: str
-    trnId: str
-    token: str
-
-
-class WithdrawalAPI:
+class GenerateQRAPI:
     _rest_endpoint: str
 
     def __init__(self):
-        self._rest_endpoint = '/agents/v2/-services-cashoutservice-cashout'
+        self._rest_endpoint = '/payments/v2/-services-paymentservice-generatecodeqr'
 
-    def _call(self, phone: str, code: str, value: str) -> WithdrawalResponse:
+    def _call(self, code: str, value: float) -> str:
         headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -36,24 +24,22 @@ class WithdrawalAPI:
         data = {
             'RequestMessage': {
                 'RequestHeader': {
-                    'Channel': constants.NEQUI_CHANNEL_DEPOSIT_WITHDRAWALS,
+                    'Channel': constants.NEQUI_CHANNEL_QR_PAYMENTS,
                     'RequestDate': datetime.now().strftime('%Y-%m-%dT%H:%M:%S0Z'),
                     'MessageID': secrets.token_hex(5),
                     'ClientID': constants.CLIENT_ID,
                     'Destination': {
-                        'ServiceName': 'CashOutServices',
-                        'ServiceOperation': 'cashOut',
+                        'ServiceName': 'PaymentsService',
+                        'ServiceOperation': 'generateCodeQR',
                         'ServiceRegion': 'C001',
-                        'ServiceVersion': '1.0.0'
+                        'ServiceVersion': '1.2.0'
                     }
                 },
                 'RequestBody': {
                     'any': {
-                        'cashOutRQ': {
-                            'phoneNumber': phone,
-                            'token': rsa_token.get_token(),
+                        'generateCodeQRRQ': {
                             'code': code,
-                            'value': value,
+                            'value': str(value)
                         }
                     }
                 }
@@ -67,18 +53,10 @@ class WithdrawalAPI:
                 status_code = data.ResponseMessage.ResponseHeader.Status.StatusCode
                 status_desc = data.ResponseMessage.ResponseHeader.Status.StatusDesc
                 if status_code == constants.NEQUI_STATUS_CODE_SUCCESS:
-                    rs = WithdrawalResponse(
-                        **data.ResponseMessage.ResponseBody.any['cashOutConsultRS']
-                    )
-                    print(
-                        "Solicitud de retiro realizada correctamente: "
-                        f"\nCelular: {rs.phoneNumber} "
-                        f"\nNombre: {rs.name} "
-                        f"\nValor: {rs.value} "
-                        f"\nID de la transacción: {rs.trnId} "
-                        f"\nFecha: {rs.date} "
-                    )
-                    return rs
+                    code_rs = data.ResponseMessage.ResponseBody.any.get('generateCodeQRRS', {})
+                    code_qr = code_rs.get('codeQR', None)
+                    print(f"Código QR generado correctamente -> QR Code String: {code_qr}")
+                    return code_qr
                 else:
                     raise Exception(f'Error, StatusCode: {status_code} - StatusDesc: {status_desc}')
             else:
@@ -86,9 +64,10 @@ class WithdrawalAPI:
         except Exception as e:
             raise e
 
-    def withdrawal(self, phone: str, code: str, value: str) -> WithdrawalResponse | None:
+    def generate_code(self, code: str, value: float, full: bool = True) -> str:
         try:
-            return self._call(phone, code, value)
+            code = self._call(code, value)
+            return f'bancadigital-{code}' if full else code
         except Exception as e:
-            print(f'Depositos y retiros -> Error realizando el retiro -> {e}')
-            return None
+            print(f'Pagos con QR code -> Error generando el código -> {e}')
+            return ''

@@ -1,32 +1,26 @@
 import json
 import secrets
 import requests
-from dataclasses import dataclass
 from datetime import datetime
 from src.auth import auth_token
 from src.app_config import config
-from src.deposit_withdrawal.get_token_rsa import rsa_token
 from src.utils import constants
 from src.utils.responses import NequiResponse
 
 
-@dataclass
-class WithdrawalResponse:
-    phoneNumber: str
-    name: str
-    value: str
-    date: str
-    trnId: str
-    token: str
-
-
-class WithdrawalAPI:
+class ReverseTransactionAPI:
+    _status_code: str
+    _status_desc: str
+    _tx_type: str
     _rest_endpoint: str
 
     def __init__(self):
-        self._rest_endpoint = '/agents/v2/-services-cashoutservice-cashout'
+        self._status_code = ''
+        self._status_desc = ''
+        self._tx_type = 'payment'
+        self._rest_endpoint = '/payments/v2/-services-reverseservices-reversetransaction'
 
-    def _call(self, phone: str, code: str, value: str) -> WithdrawalResponse:
+    def _call(self, phone: str, code: str, value: str, message_id: str) -> None:
         headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -36,24 +30,25 @@ class WithdrawalAPI:
         data = {
             'RequestMessage': {
                 'RequestHeader': {
-                    'Channel': constants.NEQUI_CHANNEL_DEPOSIT_WITHDRAWALS,
+                    'Channel': constants.NEQUI_CHANNEL_QR_PAYMENTS,
                     'RequestDate': datetime.now().strftime('%Y-%m-%dT%H:%M:%S0Z'),
                     'MessageID': secrets.token_hex(5),
                     'ClientID': constants.CLIENT_ID,
                     'Destination': {
-                        'ServiceName': 'CashOutServices',
-                        'ServiceOperation': 'cashOut',
+                        'ServiceName': 'ReverseServices',
+                        'ServiceOperation': 'reverseTransaction',
                         'ServiceRegion': 'C001',
                         'ServiceVersion': '1.0.0'
                     }
                 },
                 'RequestBody': {
                     'any': {
-                        'cashOutRQ': {
+                        'reversionRQ': {
                             'phoneNumber': phone,
-                            'token': rsa_token.get_token(),
                             'code': code,
                             'value': value,
+                            'messageId': message_id,
+                            'type': self._tx_type,
                         }
                     }
                 }
@@ -67,18 +62,12 @@ class WithdrawalAPI:
                 status_code = data.ResponseMessage.ResponseHeader.Status.StatusCode
                 status_desc = data.ResponseMessage.ResponseHeader.Status.StatusDesc
                 if status_code == constants.NEQUI_STATUS_CODE_SUCCESS:
-                    rs = WithdrawalResponse(
-                        **data.ResponseMessage.ResponseBody.any['cashOutConsultRS']
-                    )
                     print(
-                        "Solicitud de retiro realizada correctamente: "
-                        f"\nCelular: {rs.phoneNumber} "
-                        f"\nNombre: {rs.name} "
-                        f"\nValor: {rs.value} "
-                        f"\nID de la transacción: {rs.trnId} "
-                        f"\nFecha: {rs.date} "
+                        "Reversión de la transacción realizada correctamente: "
+                        f"\nEstado: {status_desc} "
                     )
-                    return rs
+                    self._status_code = status_code
+                    self._status_desc = status_desc
                 else:
                     raise Exception(f'Error, StatusCode: {status_code} - StatusDesc: {status_desc}')
             else:
@@ -86,9 +75,17 @@ class WithdrawalAPI:
         except Exception as e:
             raise e
 
-    def withdrawal(self, phone: str, code: str, value: str) -> WithdrawalResponse | None:
+    def reverse_qr_payment(self, phone: str, code: str, value: str, message_id: str) -> None:
         try:
-            return self._call(phone, code, value)
+            self._call(phone, code, value, message_id)
         except Exception as e:
-            print(f'Depositos y retiros -> Error realizando el retiro -> {e}')
-            return None
+            print(f'Pagos con QR code -> Error realizando la reversión de la transacción -> {e}')
+
+    def is_reversed(self) -> bool:
+        return True if self._status_code == constants.NEQUI_STATUS_CODE_SUCCESS else False
+
+    def get_status_code(self) -> str:
+        return self._status_code
+
+    def get_status_desc(self) -> str:
+        return self._status_desc

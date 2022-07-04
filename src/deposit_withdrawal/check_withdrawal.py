@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from src.auth import auth_token
 from src.app_config import config
-from src.utils.constants import NEQUI_STATUS_CODE_SUCCESS, CLIENT_ID, NEQUI_CHANNEL
+from src.utils import constants
 from src.utils.responses import NequiResponse
 
 
@@ -33,10 +33,10 @@ class CheckWithdrawalAPI:
         data = {
             'RequestMessage': {
                 'RequestHeader': {
-                    'Channel': NEQUI_CHANNEL,
+                    'Channel': constants.NEQUI_CHANNEL_DEPOSIT_WITHDRAWALS,
                     'RequestDate': datetime.now().strftime('%Y-%m-%dT%H:%M:%S0Z'),
                     'MessageID': secrets.token_hex(5),
-                    'ClientID': CLIENT_ID,
+                    'ClientID': constants.CLIENT_ID,
                     'Destination': {
                         'ServiceName': 'CashOutServices',
                         'ServiceOperation': 'cashOutConsult',
@@ -60,7 +60,7 @@ class CheckWithdrawalAPI:
                 data = NequiResponse(**response.json())
                 status_code = data.ResponseMessage.ResponseHeader.Status.StatusCode
                 status_desc = data.ResponseMessage.ResponseHeader.Status.StatusDesc
-                if status_code == NEQUI_STATUS_CODE_SUCCESS:
+                if status_code == constants.NEQUI_STATUS_CODE_SUCCESS:
                     rs = CheckWithdrawalResponse(
                         **data.ResponseMessage.ResponseBody.any['cashOutConsultRS']
                     )
