@@ -43,7 +43,7 @@ class WithdrawalAPI:
                     'Destination': {
                         'ServiceName': 'CashOutServices',
                         'ServiceOperation': 'cashOut',
-                        'ServiceRegion': 'C001',
+                        'ServiceRegion': constants.NEQUI_SERVICE_REGION,
                         'ServiceVersion': '1.0.0'
                     }
                 },

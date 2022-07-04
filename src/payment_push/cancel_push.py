@@ -31,7 +31,7 @@ class CancelPushAPI:
                     'Destination': {
                         'ServiceName': 'PaymentsService',
                         'ServiceOperation': 'unregisteredPayment',
-                        'ServiceRegion': 'C001',
+                        'ServiceRegion': constants.NEQUI_SERVICE_REGION,
                         'ServiceVersion': '1.0.0'
                     }
                 },

@@ -1,6 +1,7 @@
 import json
 import secrets
 import requests
+from typing import List
 from dataclasses import dataclass
 from datetime import datetime
 from src.auth import auth_token
@@ -10,19 +11,35 @@ from src.utils.responses import NequiResponse
 
 
 @dataclass
-class ChargeAccountResponse:
-    trnId: str
-    date: str
-    name: str
+class _Transaction:
+    buyerLastName: str
+    transactionDate: str
+    commerceName: str
+    buyerName: str
+    productChannel: str
+    transactionReference: str
+    messageId: str
+    transactionValue: str
 
 
-class ChargeAccountAPI:
+@dataclass
+class ReportResponse:
+    commerce: str
+    nit: str
+    total: str
+    count: str
+    accountNumber: List[str]
+    transactions: List[_Transaction]
+
+
+class ReportAPI:
     _rest_endpoint: str
 
     def __init__(self):
-        self._rest_endpoint = '/agents/v2/-services-cashinservice-cashin'
+        self._status = ''
+        self._rest_endpoint = '/partners/v2/-services-reportsservice-getreports'
 
-    def _call(self, phone: str, code: str, value: float) -> ChargeAccountResponse:
+    def _call(self, code: str, start_date: str, end_date: str, format_: str) -> ReportResponse | None:
         headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -32,23 +49,24 @@ class ChargeAccountAPI:
         data = {
             'RequestMessage': {
                 'RequestHeader': {
-                    'Channel': constants.NEQUI_CHANNEL_DEPOSIT_WITHDRAWALS,
+                    'Channel': constants.NEQUI_CHANNEL_REPORTS,
                     'RequestDate': datetime.now().strftime('%Y-%m-%dT%H:%M:%S0Z'),
                     'MessageID': secrets.token_hex(5),
                     'ClientID': constants.CLIENT_ID,
                     'Destination': {
-                        'ServiceName': 'CashInService',
-                        'ServiceOperation': 'cashIn',
+                        'ServiceName': 'ReportsService',
+                        'ServiceOperation': 'getReports',
                         'ServiceRegion': constants.NEQUI_SERVICE_REGION,
                         'ServiceVersion': '1.0.0'
                     }
                 },
                 'RequestBody': {
                     'any': {
-                        'cashInRQ': {
-                            'phoneNumber': phone,
+                        'getReportsRQ': {
                             'code': code,
-                            'value': str(value)
+                            'startDate': start_date,
+                            'endDate': end_date,
+                            'format': format_
                         }
                     }
                 }
@@ -62,12 +80,24 @@ class ChargeAccountAPI:
                 status_code = data.ResponseMessage.ResponseHeader.Status.StatusCode
                 status_desc = data.ResponseMessage.ResponseHeader.Status.StatusDesc
                 if status_code == constants.NEQUI_STATUS_CODE_SUCCESS:
-                    rs = ChargeAccountResponse(**data.ResponseMessage.ResponseBody.get('cashInFinacleRS', {}))
+                    rs_report = data.ResponseMessage.ResponseBody.any.get('getReportsRS', {})
+                    if 'reportURL' in rs_report.keys():
+                        report_url = rs_report['reportURL'] if rs_report['reportURL'] else None
+                        print(
+                            "Consulta de reporte realizada correctamente: "
+                            f"\nURL Reporte: {report_url} "
+                        )
+                        return report_url
+                    rs = ReportResponse(
+                        **rs_report
+                    )
                     print(
-                        "Recarga realizada correctamente: "
-                        f"\nID de la transacción: {rs.trnId} "
-                        f"\nFecha de la transacción: {rs.date} "
-                        f"\nNombre: {rs.name}"
+                        "Consulta de reporte realizada correctamente: "
+                        f"\nComercio: {rs.commerce} "
+                        f"\nNIT: {rs.nit} "
+                        f"\nTotal: {rs.total} "
+                        f"\nCantidad: {rs.count} "
+                        f"\nTransacciones: {len(rs.transactions)} "
                     )
                     return rs
                 else:
@@ -77,9 +107,9 @@ class ChargeAccountAPI:
         except Exception as e:
             raise e
 
-    def charge_account(self, phone: str, code: str, value: float) -> ChargeAccountResponse | None:
+    def get_report(self, code: str, start_date: str, end_date: str, format_: str = 'json') -> ReportResponse | None:
         try:
-            return self._call(phone, code, value)
+            return self._call(code, start_date, end_date, format_)
         except Exception as e:
-            print(f'Depositos y retiros -> Error recargando la cuenta -> {e}')
+            print(f'Servicios de reportes -> Error obteniendo el reporte -> {e}')
             return None

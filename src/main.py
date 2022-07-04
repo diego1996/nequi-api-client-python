@@ -1,4 +1,5 @@
 from app_config import config
+from src.reports import ReportAPI
 
 if not config.client_id:
     raise Exception(
@@ -31,3 +32,6 @@ if not config.api_base_path:
     )
 
 print("¡Felicitaciones!, la configuración básica es la adecuada")
+
+x = ReportAPI()
+x.get_report('NIT_1', '2018-09-01', '2018-09-09', 'pdf')

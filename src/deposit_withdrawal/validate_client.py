@@ -38,7 +38,7 @@ class ValidateClientAPI:
                     'Destination': {
                         'ServiceName': 'RechargeService',
                         'ServiceOperation': 'validateClient',
-                        'ServiceRegion': 'C001',
+                        'ServiceRegion': constants.NEQUI_SERVICE_REGION,
                         'ServiceVersion': '1.4.0'
                     }
                 },

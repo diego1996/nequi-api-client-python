@@ -33,7 +33,7 @@ class ReverseTransactionAPI:
                     'Destination': {
                         'ServiceName': 'ReverseServices',
                         'ServiceOperation': 'reverseTransaction',
-                        'ServiceRegion': 'C001',
+                        'ServiceRegion': constants.NEQUI_SERVICE_REGION,
                         'ServiceVersion': '1.0.0'
                     }
                 },
